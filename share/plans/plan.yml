@@ -1,0 +1,54 @@
+version: 1
+name: kernel validation
+description: Build and test linux kernel with every toolchain
+jobs:
+- name: armv5
+  builds:
+    - {toolchain: gcc-13, target_arch: arm, kconfig: [multi_v5_defconfig]}
+  tests:
+    - {device: qemu-armv5, tests: [ltp-smoke]}
+- name: armv7
+  builds:
+    - {toolchain: gcc-13, target_arch: arm, kconfig: multi_v7_defconfig}
+  tests:
+    - {device: qemu-armv7, tests: [ltp-smoke]}
+- name: arm64
+  builds:
+    - {toolchain: gcc-13, target_arch: arm64, kconfig: defconfig}
+  tests:
+    - {device: qemu-arm64, tests: [ltp-smoke]}
+- name: i386
+  builds:
+    - {toolchain: gcc-13, target_arch: i386, kconfig: defconfig}
+  tests:
+    - {device: qemu-i386, tests: [ltp-smoke]}
+- name: mips64
+  builds:
+    - {toolchain: gcc-12, target_arch: mips, kernel_image: vmlinux, kconfig: [defconfig, "https://raw.githubusercontent.com/buildroot/buildroot/master/board/qemu/mips64-malta/linux.config", "CONFIG_CPU_LITTLE_ENDIAN=n"]}
+  tests:
+    - {device: qemu-mips64, tests: [ltp-smoke]}
+- name: mips64el
+  builds:
+    - {toolchain: gcc-12, target_arch: mips, kernel_image: vmlinux, kconfig: [defconfig, "https://raw.githubusercontent.com/buildroot/buildroot/master/board/qemu/mips64el-malta/linux.config"]}
+  tests:
+    - {device: qemu-mips64el, tests: [ltp-smoke]}
+- name: ppc64le
+  builds:
+    - {toolchain: gcc-13, target_arch: powerpc, kernel_image: vmlinux, kconfig: pseries_le_defconfig}
+  tests:
+    - {device: qemu-ppc64le, tests: [ltp-smoke]}
+- name: riscv64
+  builds:
+    - {toolchain: gcc-13, target_arch: riscv, kernel_image: Image, kconfig: defconfig}
+  tests:
+    - {device: qemu-riscv64, tests: [ltp-smoke]}
+- name: sparc64
+  builds:
+    - {toolchain: gcc-11, target_arch: sparc, kernel_image: vmlinux, kconfig: [sparc64_defconfig, "https://raw.githubusercontent.com/buildroot/buildroot/master/board/qemu/sparc64-sun4u/linux.config" ]}
+  tests:
+      - {device: qemu-sparc64, tests: [ltp-smoke]}
+- name: x86_64
+  builds:
+    - {toolchain: gcc-13, target_arch: x86_64, kconfig: defconfig}
+  tests:
+    - {device: qemu-x86_64, tests: [ltp-smoke]}

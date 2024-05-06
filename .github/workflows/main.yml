@@ -1,0 +1,48 @@
+name: CI Workflow
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+
+jobs:
+  generate-pipeline:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/tuxsuite:latest
+      credentials:
+         username: ${{ github.repository_owner }}
+         password: ${{ secrets.GH_PAT }}
+
+    env:
+      PLAN: ${{ secrets.TUXSUITE_PLAN_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate configuration
+        run: |
+          if [ -z "${{ env.MY_VARIABLE }}" ]; then
+            PLAN_FILE="https://github.com/${{ github.repository_owner }}/actions-test/raw/main/share/plans/plan.yml"
+          fi
+          generate_pipeline --plan $PLAN_FILE
+
+      - name: upload generated-config.yml
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-config.yml
+          path: generated-config.yml
+
+  tuxsuite-child-pipeline:
+    runs-on: ubuntu-latest
+    needs: generate-pipeline
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: download generated-config.yml
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-config.yml
+      - run: |
+          cat generated-config.yml
+      - uses: generated-config.yml
