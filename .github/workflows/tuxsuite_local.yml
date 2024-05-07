@@ -1,0 +1,33 @@
+name: reusable workflow
+
+on:
+  workflow_call:
+    inputs:
+        JOB_NAME:
+            required: true
+            type: string
+        PLAN_URL:
+            required: true
+            type: string
+
+jobs:
+    build-and-test:
+        runs-on: ubuntu-latest
+        container:
+            image: ghcr.io/${{ github.repository_owner }}/tuxsuite:latest
+
+        env:
+            JOB_NAME: ${{ inputs.JOB_NAME }}
+            PLAN_URL: ${{ inputs.PLAN_URL }}
+            GIT_DEPTH: 1
+            PYTHONUNBUFFERED: 1
+
+        steps:
+            - name: checkout repo
+              uses: actions/checkout@v4
+
+
+            - name: $JOB_NAME
+              run: |
+                export CCACHE_DIR=$PWD/ccache
+                export SKIP_OVERLAYFS=true && tuxsuite plan execute $PLAN_URL -d $PWD --job-name $JOB_NAME --wrapper ccache --runtime podman

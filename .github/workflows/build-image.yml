@@ -1,15 +1,13 @@
 name: Docker Build and Publish Image
 
-# on:
-#   push:
-#     tags:
-#       - '*'
-#     paths:
-#       - 'Dockerfile'
-#       - '*.py'
-
 on:
-  workflow_dispatch
+  push:
+    tags:
+      - '*'
+    paths:
+      - 'Dockerfile'
+      - '*.py'
+  workflow_dispatch:
 
 jobs:
   build-and-publish:

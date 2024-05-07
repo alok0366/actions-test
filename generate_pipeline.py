@@ -5,33 +5,8 @@ import requests
 import os
 import sys
 import yaml
+import json
 
-
-gitlab_yaml_data = {"name": "build-and-boot", "on": "workflow_call", "jobs": []}
-
-build = {
-    "runs-on": "ubuntu-latest",
-    "container": {
-        "image": "ghcr.io/${{ github.repository_owner }}/tuxsuite:latest",
-        "credentials": {
-            "username": "${{ github.repository_owner }}",
-            "password": "${{ secrets.GH_PAT }}",
-        },
-    },
-    "env": {},
-    "steps": [
-        {"uses": "actions/checkout@v4"},
-        {
-            "run": "\n".join(
-                [
-                    "export CCACHE_DIR=$PWD/ccache",
-                    "export SKIP_OVERLAYFS=true && tuxsuite plan execute $PLAN_URL -d $PWD --job-name $JOB_NAME --wrapper ccache --runtime podman",
-                ]
-            )
-        },
-    ],
-    "env": {"GIT_DEPTH": 1, "PYTHONUNBUFFERED": 1},
-}
 
 cloud_pipeline = {
     "stages": ["tuxsuite_submit", "analyse_results"],
@@ -67,32 +42,26 @@ def setup_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def validate_plan(data):
+def get_job_names(data):
     job_names = []
-    for job in data.get("jobs"):
+    for job in data.get("jobs", []):
         if "name" not in job:
             print("Please provide a plan file with jobs having a name identifier")
             sys.exit(1)
         else:
-            job_name = job.get("name")
+            job_name = job["name"]
             if job_name in job_names:
                 print(f"Please use unique job names. {job_name} is used multiple times")
                 sys.exit(1)
             else:
                 job_names.append(job_name)
+    return job_names
 
 
 def generate_local_pipeline(plan):
     data = yaml.load(requests.get(plan).text, Loader=yaml.FullLoader)
-    validate_plan(data)
-    for job in data["jobs"]:
-        job_name = job["name"]
-        updated_build = copy.deepcopy(build)
-        updated_build["env"]["PLAN_URL"] = plan
-        updated_build["env"]["JOB_NAME"] = job_name
-        gitlab_yaml_data["jobs"].append({job_name: updated_build})
-
-    return yaml.dump(gitlab_yaml_data, sort_keys=False)
+    job_names = get_job_names(data)
+    return job_names
 
 
 def generate_cloud_pipeline(plan):
@@ -108,16 +77,17 @@ def generate_cloud_pipeline(plan):
 
 def main() -> int:
     # Parse command line
-    child_pipeline = None
+    child_jobs = None
     parser = setup_parser()
     options = parser.parse_args()
     tuxsuite_token = os.getenv("TUXSUITE_TOKEN", None)
     if tuxsuite_token:
-        child_pipeline = generate_cloud_pipeline(options.plan)
+        child_jobs = generate_cloud_pipeline(options.plan)
     else:
-        child_pipeline = generate_local_pipeline(options.plan)
-    with open("generated-config.yml", "w") as p:
-        p.write(child_pipeline)
+        child_jobs = generate_local_pipeline(options.plan)
+
+    with open("child_jobs.json", "w") as f:
+        json.dump({"jobs": child_jobs}, f)
 
 
 def start():
