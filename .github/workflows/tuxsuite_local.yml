@@ -21,6 +21,7 @@ jobs:
             PLAN_URL: ${{ inputs.PLAN_URL }}
             GIT_DEPTH: 1
             PYTHONUNBUFFERED: 1
+            RUNNER_ALLOW_RUNASROOT: 1
 
         steps:
             - name: checkout repo
