@@ -30,6 +30,6 @@ jobs:
             - name: $JOB_NAME
               run: |
                 git config --global --add safe.directory /__w/linux/linux
-                findmnt -o PROPAGATION /
+                podman --version
                 export CCACHE_DIR=$PWD/ccache
                 export SKIP_OVERLAYFS=true && tuxsuite plan execute $PLAN_URL -d $PWD --job-name $JOB_NAME --wrapper ccache --runtime podman
