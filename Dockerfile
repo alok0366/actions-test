@@ -18,18 +18,6 @@ RUN apt-get update && \
 
 COPY share/pind/containers.conf /etc/containers/containers.conf
 
-RUN sed -i 's|^#mount_program|mount_program|g' /etc/containers/storage.conf && \
-    sed -i '/additionalimage.*/a "/var/lib/shared",' /etc/containers/storage.conf && \
-    sed -i 's|^mountopt[[:space:]]*=.*$|mountopt = "nodev,fsync=0"|g' /etc/containers/storage.conf && \
-    mkdir -p /var/lib/shared/overlay-images && \
-    mkdir -p /var/lib/shared/overlay-layers && \
-    mkdir -p /var/lib/shared/vfs-images && \
-    mkdir -p /var/lib/shared/vfs-layers && \
-    touch /var/lib/shared/overlay-images/images.lock && \
-    touch /var/lib/shared/overlay-layers/layers.lock && \
-    touch /var/lib/shared/vfs-images/images.lock && \
-    touch /var/lib/shared/vfs-layers/layers.lock
-
 RUN apt-get update && \
     apt-get install --yes podman jq && \
     apt-get install --yes python3-jinja2 python3-requests python3-yaml python3-ruamel.yaml linux-image-amd64 python3-pip git xz-utils wget && \
