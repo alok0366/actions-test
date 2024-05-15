@@ -12,16 +12,17 @@ on:
 
 jobs:
     build-and-test:
-        runs-on: self-hosted
+        runs-on: ubuntu-24.04
         container:
             image: ghcr.io/${{ github.repository_owner }}/tuxsuite:latest
+            options: --privileged
 
         env:
             JOB_NAME: ${{ inputs.JOB_NAME }}
             PLAN_URL: ${{ inputs.PLAN_URL }}
             GIT_DEPTH: 1
             PYTHONUNBUFFERED: 1
-            RUNNER_ALLOW_RUNASROOT: 1
+            AGENT_ALLOW_RUNASROOT: 1
 
         steps:
             - name: checkout repo
@@ -32,4 +33,5 @@ jobs:
               run: |
                 git config --global --add safe.directory /__w/linux/linux
                 export CCACHE_DIR=$PWD/ccache
-                tuxsuite plan execute $PLAN_URL -d $PWD --job-name $JOB_NAME --wrapper ccache --runtime podman
+                chmod 777 .
+                export SKIP_OVERLAYFS=true && tuxsuite plan execute $PLAN_URL -d $PWD --job-name $JOB_NAME --wrapper ccache --runtime podman
